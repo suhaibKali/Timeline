@@ -3108,9 +3108,9 @@
             border-radius: 24px;
             box-shadow: var(--glass-shadow);
             width: 100%;
-            max-width: 700px;
-            height: 65vh; /* ارتفاع ممتاز للموبايل واللابتوب */
-            min-height: 400px;
+            max-width: 750px;
+            height: 70vh; /* ارتفاع ممتاز للموبايل واللابتوب */
+            min-height: 450px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -3165,24 +3165,25 @@
         .user-bubble .bubble-icon {
             background: linear-gradient(135deg, #10b981, #059669);
             color: white;
+            font-size: 1rem;
         }
 
         .bubble-text {
-            background: rgba(255, 255, 255, 0.7);
-            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 12px 18px;
             border-radius: 20px;
-            color: #1e293b; /* ثابت لضمان الوضوح التام */
+            color: #0f172a; /* لون غامق جداً لضمان الوضوح */
             font-weight: 700;
             font-size: 0.95rem;
             line-height: 1.6;
             word-wrap: break-word;
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             text-align: right;
             direction: rtl;
         }
         body.dark-mode .bubble-text {
-            background: rgba(30, 41, 59, 0.8);
+            background: rgba(30, 41, 59, 0.85);
             color: #f8fafc;
             border-color: rgba(255, 255, 255, 0.1);
         }
@@ -3190,11 +3191,10 @@
 
         .user-bubble .bubble-text {
             background: var(--primary);
-            color: white;
+            color: white !important;
             border-color: var(--primary);
             border-radius: 20px 2px 20px 20px;
         }
-        body.dark-mode .user-bubble .bubble-text { color: white; }
         body.en-mode .user-bubble .bubble-text { border-radius: 20px 20px 2px 20px; }
 
         .ai-bubble .bubble-text {
@@ -3880,9 +3880,6 @@
             <button class="action-btn" style="max-width: 200px; margin-top:20px; background: linear-gradient(135deg, #f97316, #ef4444);" onclick="burnThought()" data-i18n="burnBtn">احرق 🔥</button>
         </div>
         <div id="aiSection" class="full-page-section">
-            <button onclick="showSection('home')" style="position: absolute; top: 20px; left: 20px; background: transparent; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-sec);" title="Back">
-                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-            </button>
             <h2 style="font-size: 2rem; margin-bottom: 25px;" data-i18n="aiTitle">🤖 المساعد الذكي</h2>
             
             <div class="ai-chat-card">
@@ -5036,6 +5033,10 @@ function addStatMinutes(type, minsToAdd) {
                 soundOn: "الصوت: مفعل",
                 soundOff: "الصوت: مكتوم",
                 shareSite: "مشاركة الموقع",
+                aiAssistant: "المساعد الذكي",
+                aiTitle: "🤖 المساعد الذكي",
+                aiWelcome: "أهلاً بك! أنا جيميناي، مساعدك الدراسي. شلون أگدر أساعدك اليوم؟",
+                aiInputPlaceholder: "اكتب سؤالك هنا...",
                 copyrightText: "© 2026 TIMELINE. جميع الحقوق محفوظة."
             },
             en: {
@@ -5243,6 +5244,10 @@ function addStatMinutes(type, minsToAdd) {
                 soundOn: "Sound: ON",
                 soundOff: "Sound: OFF",
                 shareSite: "Share App",
+                aiAssistant: "AI Assistant",
+                aiTitle: "🤖 AI Assistant",
+                aiWelcome: "Hello! I am Gemini, your study assistant. How can I help you today?",
+                aiInputPlaceholder: "Type your question here...",
                 copyrightText: "© 2026 TIMELINE. All Rights Reserved."
             }
         };
@@ -7913,6 +7918,108 @@ function addStatMinutes(type, minsToAdd) {
                 }
             }
         }
+        // =========================================
+        // ✨ نظام المساعد الذكي (Gemini Chat) ✨
+        // =========================================
+        
+        // ⚠️ ضع مفتاح الـ API الجديد الخاص بك هنا ⚠️
+        const GEMINI_API_KEY = "ضع_المفتاح_الجديد_هنا"; 
+        
+        let isAITyping = false;
+
+        async function sendAIMessage() {
+            const input = document.getElementById('aiChatInput');
+            const msg = input.value.trim();
+            if (!msg || isAITyping) return;
+
+            // 1. إضافة رسالة المستخدم
+            addChatBubble(msg, 'user');
+            input.value = '';
+            input.style.height = 'auto'; // إرجاع حجم الحقل
+
+            // 2. إظهار فقاعة التحميل
+            const loadingId = 'loading-' + Date.now();
+            addChatBubble('<div class="typing-dots"><span></span><span></span><span></span></div>', 'ai', loadingId);
+            isAITyping = true;
+
+            // 3. الاتصال بجيميناي
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `أنت مساعد دراسي ذكي ولطيف جداً اسمه جيميناي، مدمج داخل منصة دراسية اسمها TIMELINE. مهمتك مساعدة الطالب العراقي في دراسته، تنظيمه، وتحفيزه.
+                                قواعدك:
+                                1. أجب بوضوح واختصار (تجنب الجرائد).
+                                2. تحدث بلهجة عراقية بيضاء محببة ومفهومة.
+                                3. استخدم الإيموجي بشكل مناسب.
+                                4. رتب إجاباتك بنقاط إذا كانت طويلة.
+                                سؤال الطالب هو: ${msg}`
+                            }]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById(loadingId).remove(); // حذف فقاعة التحميل
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    let botResponse = data.candidates[0].content.parts[0].text;
+                    // معالجة النص: تحويل النجوم إلى عريض (Bold) والنزول سطر
+                    botResponse = botResponse.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary);">$1</strong>').replace(/\n/g, '<br>');
+                    addChatBubble(botResponse, 'ai');
+                } else {
+                    addChatBubble(currentLang === 'ar' ? "عذراً، ما گدرت أستوعب طلبك، تكدر تعيد صياغته؟ 🤔" : "Sorry, I couldn't understand that. Can you rephrase? 🤔", 'ai');
+                }
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                document.getElementById(loadingId).remove();
+                addChatBubble(currentLang === 'ar' ? "واجهت مشكلة بالاتصال بالإنترنت أو المفتاح غير صالح، يرجى المحاولة بعد قليل! 🌐" : "Connection or API key issue. Please try again later! 🌐", 'ai');
+            }
+            
+            isAITyping = false;
+        }
+
+        function addChatBubble(text, sender, id = null) {
+            const chatMessages = document.getElementById('chatMessages');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender}-bubble`;
+            if (id) bubble.id = id;
+
+            const icon = sender === 'user' ? '👤' : '🤖';
+            
+            bubble.innerHTML = `
+                <div class="bubble-icon">${icon}</div>
+                <div class="bubble-text">${text}</div>
+            `;
+            
+            chatMessages.appendChild(bubble);
+            chatMessages.scrollTop = chatMessages.scrollHeight; // النزول للأسفل تلقائياً
+            
+            // صوت خفيف عند وصول رد من الذكاء الاصطناعي
+            if (sender === 'ai' && isSoundEnabled && !id) {
+                const pop = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+                pop.volume = 0.2;
+                pop.play().catch(e=>{});
+            }
+        }
+
+        // الإرسال عند الضغط على Enter (بدون Shift)
+        document.getElementById('aiChatInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendAIMessage();
+            }
+        });
+
+        // تمدد حقل الكتابة تلقائياً عند كتابة رسالة طويلة
+        document.getElementById('aiChatInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.value === '') this.style.height = 'auto';
+        });
         
         // =========================================
         // ✨ نافذة تأكيد تصفير المؤقت عند الضغط على "إعادة" ✨
@@ -8071,105 +8178,5 @@ function addStatMinutes(type, minsToAdd) {
         updateDaysDropdown('schedDay', 'schedMonth', 'schedYear');
 
     </script>
-    // =========================================
-        // ✨ نظام المساعد الذكي (Gemini Chat) ✨
-        // =========================================
-        const GEMINI_API_KEY = "AIzaSyAhOrf4xAg4O3KNZY0OSFzCnjymNJIvIus";
-        let isAITyping = false;
-
-        async function sendAIMessage() {
-            const input = document.getElementById('aiChatInput');
-            const msg = input.value.trim();
-            if (!msg || isAITyping) return;
-
-            // إضافة رسالة المستخدم
-            addChatBubble(msg, 'user');
-            input.value = '';
-            input.style.height = 'auto'; // إرجاع حجم الحقل
-
-            // إظهار فقاعة التحميل
-            const loadingId = 'loading-' + Date.now();
-            addChatBubble('<div class="typing-dots"><span></span><span></span><span></span></div>', 'ai', loadingId);
-            
-            isAITyping = true;
-
-            try {
-                // نستخدم موديل gemini-1.5-flash لأن أسرع وأذكى للمحادثات
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: `أنت مساعد دراسي ذكي ولطيف جداً اسمه جيميناي، مدمج داخل منصة دراسية اسمها TIMELINE. مهمتك مساعدة الطالب العراقي في دراسته، تنظيمه، وتحفيزه.
-                                قواعدك:
-                                1. أجب بوضوح واختصار (تجنب الجرائد).
-                                2. تحدث بلهجة عراقية بيضاء محببة (مثل: شلون أگدر أساعدك، تدلل، عاشت إيدك).
-                                3. استخدم الإيموجي بشكل مناسب.
-                                4. رتب إجاباتك بنقاط إذا كانت طويلة.
-                                سؤال الطالب هو: ${msg}`
-                            }]
-                        }]
-                    })
-                });
-
-                const data = await response.json();
-                document.getElementById(loadingId).remove(); // حذف فقاعة التحميل
-
-                if (data.candidates && data.candidates[0].content.parts[0].text) {
-                    let botResponse = data.candidates[0].content.parts[0].text;
-                    // معالجة النص (تحويل \n إلى <br> والنجوم إلى عريض)
-                    botResponse = botResponse.replace(/\*\*(.*?)\*\*/g, '<strong style="color: var(--primary);">$1</strong>').replace(/\n/g, '<br>');
-                    addChatBubble(botResponse, 'ai');
-                } else {
-                    addChatBubble(currentLang === 'ar' ? "عذراً، ما گدرت أستوعب طلبك، تكدر تعيد صياغته؟ 🤔" : "Sorry, I couldn't understand that. Can you rephrase? 🤔", 'ai');
-                }
-            } catch (error) {
-                console.error("Gemini Error:", error);
-                document.getElementById(loadingId).remove();
-                addChatBubble(currentLang === 'ar' ? "واجهت مشكلة بالاتصال بالإنترنت، يرجى المحاولة بعد قليل! 🌐" : "Connection issue. Please try again later! 🌐", 'ai');
-            }
-            
-            isAITyping = false;
-        }
-
-        function addChatBubble(text, sender, id = null) {
-            const chatMessages = document.getElementById('chatMessages');
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ${sender}-bubble`;
-            if (id) bubble.id = id;
-
-            const icon = sender === 'user' ? '👤' : '🤖';
-            
-            bubble.innerHTML = `
-                <div class="bubble-icon">${icon}</div>
-                <div class="bubble-text">${text}</div>
-            `;
-            
-            chatMessages.appendChild(bubble);
-            chatMessages.scrollTop = chatMessages.scrollHeight; 
-            
-            // صوت خفيف عند وصول رسالة
-            if (sender === 'ai' && isSoundEnabled) {
-                const pop = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
-                pop.volume = 0.2;
-                pop.play().catch(e=>{});
-            }
-        }
-
-        // إرسال بالضغط على Enter (بدون Shift للنزول سطر)
-        document.getElementById('aiChatInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendAIMessage();
-            }
-        });
-
-        // تمدد حقل الكتابة تلقائياً
-        document.getElementById('aiChatInput').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-            if (this.value === '') this.style.height = 'auto';
-        });
 </body>
 </html>
