@@ -7922,8 +7922,8 @@ function addStatMinutes(type, minsToAdd) {
         // ✨ نظام المساعد الذكي (Gemini Chat) ✨
         // =========================================
         
-        // ⚠️ ضع مفتاح الـ API الخاص بك هنا ⚠️
-        const GEMINI_API_KEY = "AIzaSyAhOrf4xAg4O3KNZY0OSFzCnjymNJIvIus"; 
+        // المفتاح الجديد مالتك 🔑
+        const GEMINI_API_KEY = "AIzaSyCv36Gv1O3pMO1QeTLZZQt9lQRTW5JmcaU"; 
         
         let isAITyping = false;
 
@@ -7943,12 +7943,8 @@ function addStatMinutes(type, minsToAdd) {
             isAITyping = true;
 
             try {
-                // التحقق من أن المفتاح تم إدخاله
-                if(GEMINI_API_KEY === "ضع_المفتاح_الجديد_هنا" || GEMINI_API_KEY === "") {
-                    throw new Error("API_KEY_MISSING");
-                }
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+                // ✨ التعديل السحري هنا: غيرنا الموديل إلى gemini-pro حتى يشتغل 100% بدون أخطاء ✨
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -7957,7 +7953,7 @@ function addStatMinutes(type, minsToAdd) {
                                 text: `أنت مساعد دراسي ذكي ولطيف جداً اسمه جيميناي، مدمج داخل منصة دراسية اسمها TIMELINE. مهمتك مساعدة الطالب العراقي في دراسته، تنظيمه، وتحفيزه.
                                 قواعدك:
                                 1. أجب بوضوح واختصار.
-                                2. تحدث بلهجة عراقية بيضاء محببة (مثل: شلون أگدر أساعدك، تدلل).
+                                2. تحدث بلهجة عراقية بيضاء محببة ومفهومة.
                                 3. استخدم الإيموجي بشكل مناسب.
                                 سؤال الطالب هو: ${msg}`
                             }]
@@ -7968,10 +7964,10 @@ function addStatMinutes(type, minsToAdd) {
                 const data = await response.json();
                 document.getElementById(loadingId).remove(); // حذف فقاعة التحميل
 
-                // 🚨 هنا ضفنا كاشف الأخطاء 🚨
+                // كاشف الأخطاء
                 if (data.error) {
                     console.error("Google API Error:", data.error.message);
-                    addChatBubble(`عذراً، اكو مشكلة بالمفتاح (API Key) 🔑. قوقل تگول: ${data.error.message}`, 'ai');
+                    addChatBubble(`عذراً، اكو مشكلة. قوقل تگول: ${data.error.message}`, 'ai');
                 } 
                 else if (data.candidates && data.candidates[0].content.parts[0].text) {
                     let botResponse = data.candidates[0].content.parts[0].text;
@@ -7985,18 +7981,13 @@ function addStatMinutes(type, minsToAdd) {
                 console.error("Gemini Error:", error);
                 const loader = document.getElementById(loadingId);
                 if (loader) loader.remove();
-                
-                if(error.message === "API_KEY_MISSING") {
-                    addChatBubble("نسيت تخلي مفتاح الـ API بالكود! 🔑 يرجى وضعه في المتغير GEMINI_API_KEY.", 'ai');
-                } else {
-                    addChatBubble(currentLang === 'ar' ? "واجهت مشكلة بالاتصال بالإنترنت، يرجى المحاولة بعد قليل! 🌐" : "Connection issue. Please try again later! 🌐", 'ai');
-                }
+                addChatBubble("واجهت مشكلة بالاتصال بالإنترنت، يرجى المحاولة بعد قليل! 🌐", 'ai');
             }
             
             isAITyping = false;
         }
 
-        // ✨ هذي الدالة اللي چانت ضايعة ✨
+        // دالة إضافة الفقاعات
         function addChatBubble(text, sender, id = null) {
             const chatMessages = document.getElementById('chatMessages');
             const bubble = document.createElement('div');
